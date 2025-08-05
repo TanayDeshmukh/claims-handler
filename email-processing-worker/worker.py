@@ -1,8 +1,10 @@
 import os
-import redis
+import redis.asyncio as redis
 import json
-import time
+import asyncio
 from dotenv import load_dotenv
+
+from common.utils import get_logger
 
 load_dotenv()
 
@@ -12,20 +14,24 @@ r = redis.Redis(
     port=int(os.getenv('REDIS_PORT', 6379))
 )
 
-while True:
-    message = r.brpop("email-ingest-queue")
-    if message:
-        queue_name, data = message
-        payload = json.loads(data)
-        correlation_id = payload['correlation_id']
-        email_data = payload['payload']
+logger = get_logger()
 
-        processed_data = {
-            "correlation_id": correlation_id,
-            "body": email_data['body'],
-            "attachments": [att for att in email_data['attachments'] if att['filename'].endswith('.pdf')]
-        }
+async def worker():
+    while True:
+        message = await r.brpop("email-ingest-queue")
+        if message:
+            queue_name, data = message
+            payload = json.loads(data)
+            claim_id = payload['claim_id']
 
-        r.lpush('pdf-processing-queue', json.dumps(processed_data))
-        print(f"[{correlation_id}] Email processed. Pushed to PDF queue.")
-    time.sleep(1)
+            metadata = {
+                "claim_id": claim_id,
+                "status": "Processing"
+            }
+
+            await r.lpush('pdf-data-extraction-queue', json.dumps(metadata))
+            logger.info(f"[{claim_id}] is being processed.")
+
+
+if __name__ == '__main__':
+    asyncio.run(worker())
