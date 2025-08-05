@@ -10,6 +10,7 @@ COPY pyproject.toml uv.lock /app/
 RUN uv sync
 
 COPY email-processing-worker/ .
+COPY common/ /app/common/
 
 ENTRYPOINT ["uv", "run"]
 

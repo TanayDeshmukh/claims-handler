@@ -18,6 +18,9 @@ services:
       - redis
     env_file:
       - .env
+    volumes:
+      - D:/Jobs/Assona/claims:/app/storage
+
 
   email-processing-worker:
     build:

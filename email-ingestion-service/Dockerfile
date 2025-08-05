@@ -5,11 +5,14 @@ COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /uvx /bin/
 
 WORKDIR /app
 
+ENV PYTHONPATH=/app
+
 COPY pyproject.toml uv.lock /app/
 
 RUN uv sync
 
 COPY email-ingestion-service/ .
+COPY common/ /app/common/
 
 EXPOSE 8000
 
