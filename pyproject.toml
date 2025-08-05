@@ -1,0 +1,19 @@
+[project]
+name = "claimshandler"
+version = "0.1.0"
+description = "An end to end claims handling system demo"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]==0.116.1",
+    "requests==2.32.4",
+    "redis==6.2.0",
+    "reportlab==4.4.3"
+
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.12.0",
+    "pytest==8.4.1",
+]
