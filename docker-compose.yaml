@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  redis:
+    image: 'redis:7'
+    container_name: 'redis'
+    ports:
+      - 6379:6379
+
+  email-ingestion-service:
+    build:
+      context: .
+      dockerfile: email-ingestion-service/Dockerfile
+    container_name: 'email-ingestion-service'
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  email-processing-worker:
+    build:
+      context: .
+      dockerfile: email-processing-worker/Dockerfile
+    container_name: 'email-processing-worker'
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  monitoring-dashboard:
+    build:
+      context: .
+      dockerfile: monitoring-dashboard/Dockerfile
+    container_name: 'monitoring-dashboard'
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    env_file:
+      - .env
