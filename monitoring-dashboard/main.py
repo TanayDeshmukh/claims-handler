@@ -1,8 +1,9 @@
 import os
+
 import redis
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from dotenv import load_dotenv
 
 load_dotenv()
 
