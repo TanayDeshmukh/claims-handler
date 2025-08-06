@@ -30,4 +30,7 @@ def send_mock_email():
 
 
 if __name__ == '__main__':
-    send_mock_email()
+    num_samples = 10
+    for i in range(num_samples):
+        print(f"Mocking email {i+1}/{num_samples}...")
+        send_mock_email()
