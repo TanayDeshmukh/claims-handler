@@ -65,7 +65,7 @@ async def ingest_email(
 
         metadata = {
             "claim_id": claim_id,
-            "status": "Ingested"
+            "status": "ingested"
         }
 
         await r.lpush("email-ingest-queue", json.dumps(metadata))

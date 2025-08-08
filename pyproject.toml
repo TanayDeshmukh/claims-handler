@@ -9,8 +9,8 @@ dependencies = [
     "requests==2.32.4",
     "redis==6.2.0",
     "reportlab==4.4.3",
-    "prometheus-client==0.22.1"
-
+    "prometheus-client==0.22.1",
+    "docling==2.43.0"
 ]
 
 [project.optional-dependencies]

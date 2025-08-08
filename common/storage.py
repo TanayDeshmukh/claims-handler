@@ -25,7 +25,6 @@ class LocalStorage(StorageBackend):
     def file_path(self, claim_id: str) -> Path:
         claim_id = claim_id.lower()
         sub_folders = [claim_id[i] for i in range(self.sub_folder_depth)]
-        # generated_path = self.storage_dir / "/".join(sub_folders) / claim_id
         generated_path = self.storage_dir.joinpath(*sub_folders) / claim_id
         return generated_path
 

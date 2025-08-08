@@ -33,15 +33,65 @@ services:
     env_file:
       - .env
 
-  monitoring-dashboard:
+  document-classifier-worker:
     build:
       context: .
-      dockerfile: monitoring-dashboard/Dockerfile
-    container_name: 'monitoring-dashboard'
-    ports:
-      - "8080:8080"
+      dockerfile: document-classifier-worker/Dockerfile
+    container_name: 'document-classifier-worker'
     depends_on:
-      - redis
+      - email-processing-worker
+    env_file:
+      - .env
+
+
+  ocr-worker:
+    build:
+      context: .
+      dockerfile: ocr-worker/Dockerfile
+    container_name: 'ocr-worker'
+    depends_on:
+      - document-classifier-worker
+    env_file:
+      - .env
+
+
+  data-extraction-worker:
+    build:
+      context: .
+      dockerfile: data-extraction-worker/Dockerfile
+    container_name: 'data-extraction-worker'
+    depends_on:
+      - ocr-worker
+    env_file:
+      - .env
+
+  policy-coverage-check-worker:
+    build:
+      context: .
+      dockerfile: policy-coverage-check-worker/Dockerfile
+    container_name: 'policy-coverage-check-worker'
+    depends_on:
+      - data-extraction-worker
+    env_file:
+      - .env
+
+  cost-positions-extraction-worker:
+    build:
+      context: .
+      dockerfile: cost-positions-extraction-worker/Dockerfile
+    container_name: 'cost-positions-extraction-worker'
+    depends_on:
+      - policy-coverage-check-worker
+    env_file:
+      - .env
+
+  case-plausibility-check-worker:
+    build:
+      context: .
+      dockerfile: case-plausibility-check-worker/Dockerfile
+    container_name: 'case-plausibility-check-worker'
+    depends_on:
+      - cost-positions-extraction-worker
     env_file:
       - .env
 

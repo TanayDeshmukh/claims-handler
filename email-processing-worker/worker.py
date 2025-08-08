@@ -27,10 +27,10 @@ async def worker():
 
             metadata = {
                 "claim_id": claim_id,
-                "status": "Processing"
+                "status": "processing"
             }
 
-            await r.lpush('pdf-data-extraction-queue', json.dumps(metadata))
+            await r.lpush('document-classifier-queue', json.dumps(metadata))
             logger.info(f"[{claim_id}] is being processed.")
 
 
