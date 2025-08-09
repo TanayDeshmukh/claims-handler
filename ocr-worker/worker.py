@@ -3,8 +3,8 @@ import json
 import os
 import random
 import time
-from typing import Literal
 
+import pymupdf
 import redis.asyncio as redis
 from dotenv import load_dotenv
 
@@ -22,22 +22,21 @@ logger = get_logger()
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 
-async def perform_ocr(claim_id: str) -> int:
+async def perform_ocr(claim_id: str):
     # This function mocks the OCR step
-    # TODO describe in detail the possible options for OCR
-    # eg. Tesseract, Docling
-    # Give details about each method, including pros/cons. Possibility to deploy on prem, etc.
+    # Models like Tesseract, EasyOCR can be used
 
-    case_document_dir = get_local_storage().file_path(claim_id)
+    claim_document_dir = get_local_storage().file_path(claim_id)
     document_path = case_document_dir / f"{claim_id.lower()}.pdf"
 
-    # 1. Load pdf
-    # 2. Perform OCR
-    # 3. save the OCR in case_document_dir
+    document = pymupdf.open(document_path)
+    doc_text = "\n".join([page.get_text() for page in document])
+    dummy_ocr_file = claim_document_dir / f"{claim_id.lower()}.txt"
+
+    with open(dummy_ocr_file, "w") as f:
+        f.writelines(doc_text)
 
     time.sleep(random.randint(1, 4))
-
-    return 1
 
 
 async def worker():
@@ -49,17 +48,14 @@ async def worker():
             claim_id = payload["claim_id"]
             retries = payload.get("retries", 0)
             try:
-                result = await perform_ocr(claim_id)
+                _ = await perform_ocr(claim_id)
 
-                if result:
-                    metadata = {"claim_id": claim_id, "status": "ocr_performed"}
+                metadata = {"claim_id": claim_id, "status": "ocr_performed"}
 
-                    await r.lpush(
-                        Queues.DOCUMENT_CLASSIFIER_QUEUE.value, json.dumps(metadata)
-                    )
-                    logger.info(f"[{claim_id}] is being processed.")
-                else:
-                    logger.info(f"OCR failed for {claim_id=}.")
+                await r.lpush(
+                    Queues.DOCUMENT_CLASSIFIER_QUEUE.value, json.dumps(metadata)
+                )
+                logger.info(f"[{claim_id}] is being processed.")
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1

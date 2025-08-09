@@ -23,7 +23,6 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 async def run_case_plausibility_check(claim_id: str) -> bool:
     # This function mocks the plausibility check of the cost positions
-    # TODO describe in detail the possible options for cost position extraction
     # eg. Random Forest/ XGBoost, Transformer based models
 
     case_document_dir = get_local_storage().file_path(claim_id)

@@ -10,8 +10,9 @@ dependencies = [
     "redis==6.2.0",
     "reportlab==4.4.3",
     "prometheus-client==0.22.1",
-    "docling==2.43.0",
-    "black==25.1.0"
+    "PyMuPDF==1.26.3",
+    "black==25.1.0",
+    "easyocr==1.7.2"
 ]
 
 [project.optional-dependencies]

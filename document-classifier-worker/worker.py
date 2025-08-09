@@ -8,6 +8,7 @@ from typing import Literal
 import redis.asyncio as redis
 from dotenv import load_dotenv
 
+from common.storage import get_local_storage
 from common.utils import get_logger, Queues
 
 load_dotenv()
@@ -23,9 +24,14 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 async def classify_document(claim_id: str) -> Literal["partial", "total_loss", "other"]:
     # This function mocks the document classification step
-    # TODO describe the method in detail including all the possible options
-    # eg. Simple CNN, Vision Transformer, LLM, keyword extraction (needs OCR)
-    # Give details about each method, including training requirements
+
+    claim_document_dir = get_local_storage().file_path(claim_id)
+    dummy_ocr_file = claim_document_dir / f"{claim_id.lower()}.txt"
+
+    with open(dummy_ocr_file, "r") as file:
+        ocr = file.read().rstrip()
+
+    # LLM call to classify the document type
 
     time.sleep(random.randint(1, 4))
     document_type = random.choices(

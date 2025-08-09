@@ -28,9 +28,12 @@ async def run_cost_position_extraction(claim_id: str):
     # eg. Donut, LLMs, Table Transformer, Amazon Tesseract, Azure Document Intelligence,
     # Docling, pdfplumber (work well for machine generated pdf)
 
-    case_document_dir = get_local_storage().file_path(claim_id)
-    ocr_path = case_document_dir / f"{claim_id.lower()}.xml"
-    document_path = case_document_dir / f"{claim_id.lower()}.pdf"
+    claim_document_dir = get_local_storage().file_path(claim_id)
+    document_path = claim_document_dir / f"{claim_id.lower()}.pdf"
+    dummy_ocr_file = claim_document_dir / f"{claim_id.lower()}.txt"
+
+    with open(dummy_ocr_file, "r") as file:
+        ocr = file.read().rstrip()
 
     # Use the PDF and OCR to extract cost positions using one of the mentioned methods
     # The cost positions will ideally be saved in a database

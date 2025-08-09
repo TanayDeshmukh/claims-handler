@@ -24,14 +24,12 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 async def run_policy_coverage_check(claim_id: str) -> int:
     # This function mocks the policy coverage check step
-    # TODO describe in detail the possible options for policy coverage check
     # Lookup table
     # Fuzzy check
     # Reranker
-    # Give details about each method, including pros/cons.
 
-    case_document_dir = get_local_storage().file_path(claim_id)
-    case_df_path = case_document_dir / f"{claim_id.lower()}.parquet"
+    claim_document_dir = get_local_storage().file_path(claim_id)
+    case_df_path = claim_document_dir / f"{claim_id.lower()}.parquet"
 
     # 1. Load dataframe
     # 2. Use lookup table for hard checks like policy number and damage date. (Must have a 100% match)

@@ -24,16 +24,16 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 async def run_data_extraction(claim_id: str):
     # This function mocks the data extraction step
-    # TODO describe in detail the possible options for data extraction
-    # eg. Custom NER model, LLM, Donut
-    # Give details about each method, including pros/cons. Training details.
+    # Models like Custom NER model, LLM, Donut can be used
 
-    case_document_dir = get_local_storage().file_path(claim_id)
-    ocr_path = case_document_dir / f"{claim_id.lower()}.xml"
+    claim_document_dir = get_local_storage().file_path(claim_id)
+    dummy_ocr_file = claim_document_dir / f"{claim_id.lower()}.txt"
 
-    # 1. Load OCR
-    # 2. Run data extraction model
-    # 3. save the extracted data in case_document_dir is a json, parquet, etc. format.
+    with open(dummy_ocr_file, "r") as file:
+        ocr = file.read().rstrip()
+
+    # LLM call to extract structured information from the dummy ocr text
+    # Output can be saved in a parquet file in the claim storage dir
 
     time.sleep(random.randint(1, 4))
 
