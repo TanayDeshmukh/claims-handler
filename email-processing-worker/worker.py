@@ -11,11 +11,11 @@ load_dotenv()
 
 
 r = redis.Redis(
-    host=os.getenv('REDIS_HOST', 'redis'),
-    port=int(os.getenv('REDIS_PORT', 6379))
+    host=os.getenv("REDIS_HOST", "redis"), port=int(os.getenv("REDIS_PORT", 6379))
 )
 
 logger = get_logger()
+
 
 async def worker():
     while True:
@@ -23,16 +23,13 @@ async def worker():
         if message:
             queue_name, data = message
             payload = json.loads(data)
-            claim_id = payload['claim_id']
+            claim_id = payload["claim_id"]
 
-            metadata = {
-                "claim_id": claim_id,
-                "status": "processing"
-            }
+            metadata = {"claim_id": claim_id, "status": "processing"}
 
-            await r.lpush('document-classifier-queue', json.dumps(metadata))
+            await r.lpush("document-classifier-queue", json.dumps(metadata))
             logger.info(f"[{claim_id}] is being processed.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(worker())

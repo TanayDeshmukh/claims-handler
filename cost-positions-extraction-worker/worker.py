@@ -15,12 +15,11 @@ load_dotenv()
 
 
 r = redis.Redis(
-    host=os.getenv('REDIS_HOST', 'redis'),
-    port=int(os.getenv('REDIS_PORT', 6379))
+    host=os.getenv("REDIS_HOST", "redis"), port=int(os.getenv("REDIS_PORT", 6379))
 )
 
 logger = get_logger()
-MAX_RETRIES = int(os.getenv('MAX_RETRIES', 3))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 
 async def run_cost_position_extraction(claim_id: str):
@@ -45,23 +44,25 @@ async def worker():
         if message:
             queue_name, data = message
             payload = json.loads(data)
-            claim_id = payload['claim_id']
+            claim_id = payload["claim_id"]
             retries = payload.get("retries", 0)
             try:
                 _ = await run_cost_position_extraction(claim_id)
                 metadata = {
                     "claim_id": claim_id,
-                    "status": "cost_positions_extraction_completed"
+                    "status": "cost_positions_extraction_completed",
                 }
-                await r.lpush('case-plausibility-check-queue', json.dumps(metadata))
+                await r.lpush("case-plausibility-check-queue", json.dumps(metadata))
             except Exception as e:
                 if retries < MAX_RETRIES:
-                    payload['retries'] = retries + 1
-                    await r.lpush("cost-positions-extraction-queue", json.dumps(payload))
+                    payload["retries"] = retries + 1
+                    await r.lpush(
+                        "cost-positions-extraction-queue", json.dumps(payload)
+                    )
                 else:
                     await r.lpush("cost-positions-extraction-dlq", json.dumps(payload))
                     logger.error(f"Added {claim_id=} to cost positions extraction DLQ.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(worker())

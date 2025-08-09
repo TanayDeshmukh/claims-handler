@@ -15,12 +15,11 @@ load_dotenv()
 
 
 r = redis.Redis(
-    host=os.getenv('REDIS_HOST', 'redis'),
-    port=int(os.getenv('REDIS_PORT', 6379))
+    host=os.getenv("REDIS_HOST", "redis"), port=int(os.getenv("REDIS_PORT", 6379))
 )
 
 logger = get_logger()
-MAX_RETRIES = int(os.getenv('MAX_RETRIES', 3))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 
 async def run_policy_coverage_check(claim_id: str) -> int:
@@ -47,13 +46,14 @@ async def run_policy_coverage_check(claim_id: str) -> int:
 
     return result[0]
 
+
 async def worker():
     while True:
         message = await r.brpop("policy-coverage-check-queue")
         if message:
             queue_name, data = message
             payload = json.loads(data)
-            claim_id = payload['claim_id']
+            claim_id = payload["claim_id"]
             retries = payload.get("retries", 0)
             try:
                 result = await run_policy_coverage_check(claim_id)
@@ -61,21 +61,23 @@ async def worker():
                 if result:
                     metadata = {
                         "claim_id": claim_id,
-                        "status": "policy_coverage_check_performed"
+                        "status": "policy_coverage_check_performed",
                     }
 
-                    await r.lpush('cost-positions-extraction-queue', json.dumps(metadata))
+                    await r.lpush(
+                        "cost-positions-extraction-queue", json.dumps(metadata)
+                    )
                 else:
                     logger.info(f"Policy check for {claim_id=} returned false.")
                     # The claim is not eligible under the policy. The claim can be added to a separate queue for rejection or human feedback
             except Exception as e:
                 if retries < MAX_RETRIES:
-                    payload['retries'] = retries + 1
+                    payload["retries"] = retries + 1
                     await r.lpush("policy-coverage-check-queue", json.dumps(payload))
                 else:
                     await r.lpush("policy-coverage-check-dlq", json.dumps(payload))
                     logger.error(f"Added {claim_id=} to policy coverage check DLQ.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(worker())

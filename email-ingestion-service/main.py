@@ -31,7 +31,7 @@ INGESTION_QUEUE_LENGTH = Gauge(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    prometheus_server_port = os.getenv('PROMETHEUS_SERVER_PORT')
+    prometheus_server_port = os.getenv("PROMETHEUS_SERVER_PORT")
     start_http_server(int(prometheus_server_port))
     get_logger().info(f"Prometheus metrics started on port  {prometheus_server_port}")
 
@@ -40,16 +40,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 r = redis.Redis(
-    host=os.getenv("REDIS_HOST", "redis"),
-    port=int(os.getenv("REDIS_PORT", 6379))
+    host=os.getenv("REDIS_HOST", "redis"), port=int(os.getenv("REDIS_PORT", 6379))
 )
+
 
 @app.post("/ingest-email")
 async def ingest_email(
-        sender: str = Form(...),
-        subject: str = Form(...),
-        body: str = Form(...),
-        attachment: UploadFile = File(...)
+    sender: str = Form(...),
+    subject: str = Form(...),
+    body: str = Form(...),
+    attachment: UploadFile = File(...),
 ):
     with EMAILS_INGESTION_LATENCY.time():
         logger = get_logger()
@@ -61,12 +61,9 @@ async def ingest_email(
 
         time.sleep(random.randint(1, 5))
 
-        claim_id = await local_storage.store(file_bytes=pdf_contents, extension='pdf')
+        claim_id = await local_storage.store(file_bytes=pdf_contents, extension="pdf")
 
-        metadata = {
-            "claim_id": claim_id,
-            "status": "ingested"
-        }
+        metadata = {"claim_id": claim_id, "status": "ingested"}
 
         await r.lpush("email-ingest-queue", json.dumps(metadata))
         logger.info(f"Email ingested and added to queue with ID {claim_id}")

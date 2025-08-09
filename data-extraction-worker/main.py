@@ -15,12 +15,11 @@ load_dotenv()
 
 
 r = redis.Redis(
-    host=os.getenv('REDIS_HOST', 'redis'),
-    port=int(os.getenv('REDIS_PORT', 6379))
+    host=os.getenv("REDIS_HOST", "redis"), port=int(os.getenv("REDIS_PORT", 6379))
 )
 
 logger = get_logger()
-MAX_RETRIES = int(os.getenv('MAX_RETRIES', 3))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 
 async def run_data_extraction(claim_id: str):
@@ -39,35 +38,30 @@ async def run_data_extraction(claim_id: str):
     time.sleep(random.randint(1, 4))
 
 
-
-
 async def worker():
     while True:
         message = await r.brpop("data-extraction-queue")
         if message:
             queue_name, data = message
             payload = json.loads(data)
-            claim_id = payload['claim_id']
+            claim_id = payload["claim_id"]
             retries = payload.get("retries", 0)
             try:
                 _ = await run_data_extraction(claim_id)
 
-                metadata = {
-                    "claim_id": claim_id,
-                    "status": "data_extraction_performed"
-                }
+                metadata = {"claim_id": claim_id, "status": "data_extraction_performed"}
 
-                await r.lpush('policy-coverage-check-queue', json.dumps(metadata))
+                await r.lpush("policy-coverage-check-queue", json.dumps(metadata))
                 logger.info(f"[{claim_id}] is being processed.")
 
             except Exception as e:
                 if retries < MAX_RETRIES:
-                    payload['retries'] = retries + 1
+                    payload["retries"] = retries + 1
                     await r.lpush("data-extraction-queue", json.dumps(payload))
                 else:
                     await r.lpush("data-extraction-dlq", json.dumps(payload))
                     logger.error(f"Added {claim_id=} to data extraction DLQ.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(worker())

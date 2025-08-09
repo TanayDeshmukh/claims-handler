@@ -7,7 +7,6 @@ from functools import lru_cache
 from dotenv import load_dotenv
 
 
-
 load_dotenv()
 
 
@@ -44,6 +43,7 @@ class LocalStorage(StorageBackend):
         await to_thread.run_sync(self._write_file, file_path, file_bytes)
 
         return claim_id
+
 
 @lru_cache
 def get_local_storage():

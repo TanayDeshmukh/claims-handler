@@ -15,12 +15,11 @@ load_dotenv()
 
 
 r = redis.Redis(
-    host=os.getenv('REDIS_HOST', 'redis'),
-    port=int(os.getenv('REDIS_PORT', 6379))
+    host=os.getenv("REDIS_HOST", "redis"), port=int(os.getenv("REDIS_PORT", 6379))
 )
 
 logger = get_logger()
-MAX_RETRIES = int(os.getenv('MAX_RETRIES', 3))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 
 async def run_case_plausibility_check(claim_id: str) -> bool:
@@ -49,28 +48,28 @@ async def worker():
         if message:
             queue_name, data = message
             payload = json.loads(data)
-            claim_id = payload['claim_id']
+            claim_id = payload["claim_id"]
             retries = payload.get("retries", 0)
             try:
                 result = await run_case_plausibility_check(claim_id)
                 metadata = {
                     "claim_id": claim_id,
-                    "status": "cost_positions_extraction_completed"
+                    "status": "cost_positions_extraction_completed",
                 }
 
                 if result:
-                    await r.lpush('claim-accepted-queue', json.dumps(metadata))
+                    await r.lpush("claim-accepted-queue", json.dumps(metadata))
                 else:
                     logger.info(f"Rejected {claim_id=}.")
                     # The claim was rejected. The claim can be added to a separate queue for rejection or human feedback
             except Exception as e:
                 if retries < MAX_RETRIES:
-                    payload['retries'] = retries + 1
+                    payload["retries"] = retries + 1
                     await r.lpush("case-plausibility-check-queue", json.dumps(payload))
                 else:
                     await r.lpush("case-plausibility-check-dlq", json.dumps(payload))
                     logger.error(f"Added {claim_id=} to case plausibility check DLQ.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(worker())
