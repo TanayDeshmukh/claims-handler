@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from prometheus_client import start_http_server, Counter, Histogram, Gauge
 
 from common.storage import get_local_storage, LocalStorage
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -65,11 +65,11 @@ async def ingest_email(
 
         metadata = {"claim_id": claim_id, "status": "ingested"}
 
-        await r.lpush("email-ingest-queue", json.dumps(metadata))
+        await r.lpush(Queues.EMAIL_INGESTION_QUEUE.value, json.dumps(metadata))
         logger.info(f"Email ingested and added to queue with ID {claim_id}")
 
         EMAILS_INGESTED_TOTAL.inc()
-        queue_length = await r.llen("email-ingest-queue")
+        queue_length = await r.llen(Queues.EMAIL_INGESTION_QUEUE.value)
         INGESTION_QUEUE_LENGTH.set(queue_length)
 
         return JSONResponse(content={"message": "Email ingested", "claim_id": claim_id})

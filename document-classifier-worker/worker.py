@@ -8,7 +8,7 @@ from typing import Literal
 import redis.asyncio as redis
 from dotenv import load_dotenv
 
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -37,7 +37,7 @@ async def classify_document(claim_id: str) -> Literal["partial", "total_loss", "
 
 async def worker():
     while True:
-        message = await r.brpop("document-classifier-queue")
+        message = await r.brpop([Queues.DOCUMENT_CLASSIFIER_QUEUE.value], timeout=10)
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -45,24 +45,35 @@ async def worker():
             retries = payload.get("retries", 0)
             try:
                 document_type = await classify_document(claim_id)
+                metadata = {
+                    "claim_id": claim_id,
+                    "status": f"document_type_{document_type}",
+                }
 
                 if document_type == "partial":
-                    metadata = {"claim_id": claim_id, "status": "document_classified"}
-
-                    await r.lpush("ocr-queue", json.dumps(metadata))
-                    logger.info(f"[{claim_id}] is being processed.")
+                    await r.lpush(
+                        Queues.DATA_EXTRACTION_QUEUE.value, json.dumps(metadata)
+                    )
+                    logger.info(f"[{claim_id}] classified as {document_type=}.")
                 else:
                     logger.error(
                         f"[{claim_id}] is of {document_type=}. Can not be processed further."
+                    )
+                    await r.lpush(
+                        Queues.CLAIM_REJECTION_QUEUE.value, json.dumps(metadata)
                     )
                     # the logic to reject claim/ handover to the user/ send automated reply back to the sender, goes here.
                     # The claim can be added to a separate queue for human intervention
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1
-                    await r.lpush("document-classifier-queue", json.dumps(payload))
+                    await r.lpush(
+                        Queues.DOCUMENT_CLASSIFIER_QUEUE.value, json.dumps(payload)
+                    )
                 else:
-                    await r.lpush("document-classifier-dlq", json.dumps(payload))
+                    await r.lpush(
+                        Queues.DOCUMENT_CLASSIFIER_DLQ.value, json.dumps(payload)
+                    )
                     logger.error(f"Added {claim_id=} to document classifier DLQ.")
 
 

@@ -3,13 +3,12 @@ import json
 import os
 import random
 import time
-from typing import Literal
 
 import redis.asyncio as redis
 from dotenv import load_dotenv
 
 from common.storage import get_local_storage
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -44,7 +43,9 @@ async def run_case_plausibility_check(claim_id: str) -> bool:
 
 async def worker():
     while True:
-        message = await r.brpop("case-plausibility-check-queue")
+        message = await r.brpop(
+            [Queues.CASE_PLAUSIBILITY_CHECK_QUEUE.value], timeout=10
+        )
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -54,20 +55,29 @@ async def worker():
                 result = await run_case_plausibility_check(claim_id)
                 metadata = {
                     "claim_id": claim_id,
-                    "status": "cost_positions_extraction_completed",
+                    "status": f"case_plausibility_check_{str(result).lower()}",
                 }
 
                 if result:
-                    await r.lpush("claim-accepted-queue", json.dumps(metadata))
+                    await r.lpush(
+                        Queues.CLAIM_ACCEPTANCE_QUEUE.value, json.dumps(metadata)
+                    )
                 else:
                     logger.info(f"Rejected {claim_id=}.")
+                    await r.lpush(
+                        Queues.CLAIM_REJECTION_QUEUE.value, json.dumps(metadata)
+                    )
                     # The claim was rejected. The claim can be added to a separate queue for rejection or human feedback
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1
-                    await r.lpush("case-plausibility-check-queue", json.dumps(payload))
+                    await r.lpush(
+                        Queues.CASE_PLAUSIBILITY_CHECK_QUEUE.value, json.dumps(payload)
+                    )
                 else:
-                    await r.lpush("case-plausibility-check-dlq", json.dumps(payload))
+                    await r.lpush(
+                        Queues.CASE_PLAUSIBILITY_CHECK_DLQ.value, json.dumps(payload)
+                    )
                     logger.error(f"Added {claim_id=} to case plausibility check DLQ.")
 
 

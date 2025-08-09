@@ -9,7 +9,7 @@ import redis.asyncio as redis
 from dotenv import load_dotenv
 
 from common.storage import get_local_storage
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -40,7 +40,9 @@ async def run_cost_position_extraction(claim_id: str):
 
 async def worker():
     while True:
-        message = await r.brpop("cost-positions-extraction-queue")
+        message = await r.brpop(
+            [Queues.COST_POSITIONS_EXTRACTION_QUEUE.value], timeout=10
+        )
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -52,15 +54,20 @@ async def worker():
                     "claim_id": claim_id,
                     "status": "cost_positions_extraction_completed",
                 }
-                await r.lpush("case-plausibility-check-queue", json.dumps(metadata))
+                await r.lpush(
+                    Queues.CASE_PLAUSIBILITY_CHECK_QUEUE.value, json.dumps(metadata)
+                )
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1
                     await r.lpush(
-                        "cost-positions-extraction-queue", json.dumps(payload)
+                        Queues.COST_POSITIONS_EXTRACTION_QUEUE.value,
+                        json.dumps(payload),
                     )
                 else:
-                    await r.lpush("cost-positions-extraction-dlq", json.dumps(payload))
+                    await r.lpush(
+                        Queues.COST_POSITIONS_EXTRACTION_DLQ.value, json.dumps(payload)
+                    )
                     logger.error(f"Added {claim_id=} to cost positions extraction DLQ.")
 
 

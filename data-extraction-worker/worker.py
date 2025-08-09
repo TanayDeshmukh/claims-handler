@@ -9,7 +9,7 @@ import redis.asyncio as redis
 from dotenv import load_dotenv
 
 from common.storage import get_local_storage
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -40,7 +40,7 @@ async def run_data_extraction(claim_id: str):
 
 async def worker():
     while True:
-        message = await r.brpop("data-extraction-queue")
+        message = await r.brpop([Queues.DATA_EXTRACTION_QUEUE.value], timeout=10)
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -51,15 +51,19 @@ async def worker():
 
                 metadata = {"claim_id": claim_id, "status": "data_extraction_performed"}
 
-                await r.lpush("policy-coverage-check-queue", json.dumps(metadata))
-                logger.info(f"[{claim_id}] is being processed.")
+                await r.lpush(
+                    Queues.POLICY_COVERAGE_CHECK_QUEUE.value, json.dumps(metadata)
+                )
+                logger.info(f"[{claim_id}] data extraction completed.")
 
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1
-                    await r.lpush("data-extraction-queue", json.dumps(payload))
+                    await r.lpush(
+                        Queues.DATA_EXTRACTION_QUEUE.value, json.dumps(payload)
+                    )
                 else:
-                    await r.lpush("data-extraction-dlq", json.dumps(payload))
+                    await r.lpush(Queues.DATA_EXTRACTION_DLQ.value, json.dumps(payload))
                     logger.error(f"Added {claim_id=} to data extraction DLQ.")
 
 

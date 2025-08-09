@@ -5,7 +5,7 @@ import os
 import redis.asyncio as redis
 from dotenv import load_dotenv
 
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -19,7 +19,7 @@ logger = get_logger()
 
 async def worker():
     while True:
-        message = await r.brpop("email-ingest-queue")
+        message = await r.brpop([Queues.EMAIL_INGESTION_QUEUE.value], timeout=10)
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -27,7 +27,7 @@ async def worker():
 
             metadata = {"claim_id": claim_id, "status": "processing"}
 
-            await r.lpush("document-classifier-queue", json.dumps(metadata))
+            await r.lpush(Queues.OCR_QUEUE.value, json.dumps(metadata))
             logger.info(f"[{claim_id}] is being processed.")
 
 

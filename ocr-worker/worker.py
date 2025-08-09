@@ -9,7 +9,7 @@ import redis.asyncio as redis
 from dotenv import load_dotenv
 
 from common.storage import get_local_storage
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -42,7 +42,7 @@ async def perform_ocr(claim_id: str) -> int:
 
 async def worker():
     while True:
-        message = await r.brpop("ocr-queue")
+        message = await r.brpop([Queues.OCR_QUEUE.value], timeout=10)
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -54,16 +54,18 @@ async def worker():
                 if result:
                     metadata = {"claim_id": claim_id, "status": "ocr_performed"}
 
-                    await r.lpush("data-extraction-queue", json.dumps(metadata))
+                    await r.lpush(
+                        Queues.DOCUMENT_CLASSIFIER_QUEUE.value, json.dumps(metadata)
+                    )
                     logger.info(f"[{claim_id}] is being processed.")
                 else:
                     logger.info(f"OCR failed for {claim_id=}.")
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1
-                    await r.lpush("ocr-queue", json.dumps(payload))
+                    await r.lpush(Queues.OCR_QUEUE.value, json.dumps(payload))
                 else:
-                    await r.lpush("ocr-dlq", json.dumps(payload))
+                    await r.lpush(Queues.OCR_DLQ.value, json.dumps(payload))
                     logger.error(f"Added {claim_id=} to OCR DLQ.")
 
 

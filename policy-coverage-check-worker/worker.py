@@ -9,7 +9,7 @@ import redis.asyncio as redis
 from dotenv import load_dotenv
 
 from common.storage import get_local_storage
-from common.utils import get_logger
+from common.utils import get_logger, Queues
 
 load_dotenv()
 
@@ -49,7 +49,7 @@ async def run_policy_coverage_check(claim_id: str) -> int:
 
 async def worker():
     while True:
-        message = await r.brpop("policy-coverage-check-queue")
+        message = await r.brpop([Queues.POLICY_COVERAGE_CHECK_QUEUE.value], timeout=10)
         if message:
             queue_name, data = message
             payload = json.loads(data)
@@ -57,25 +57,33 @@ async def worker():
             retries = payload.get("retries", 0)
             try:
                 result = await run_policy_coverage_check(claim_id)
-
+                metadata = {
+                    "claim_id": claim_id,
+                    "status": f"policy_coverage_check_{str(result).lower()}",
+                }
                 if result:
-                    metadata = {
-                        "claim_id": claim_id,
-                        "status": "policy_coverage_check_performed",
-                    }
-
                     await r.lpush(
-                        "cost-positions-extraction-queue", json.dumps(metadata)
+                        Queues.COST_POSITIONS_EXTRACTION_QUEUE.value,
+                        json.dumps(metadata),
                     )
+                    logger.info(f"[{claim_id}] policy verified.")
+
                 else:
-                    logger.info(f"Policy check for {claim_id=} returned false.")
+                    logger.error(f"Policy check for {claim_id=} returned false.")
+                    await r.lpush(
+                        Queues.CLAIM_REJECTION_QUEUE.value, json.dumps(metadata)
+                    )
                     # The claim is not eligible under the policy. The claim can be added to a separate queue for rejection or human feedback
             except Exception as e:
                 if retries < MAX_RETRIES:
                     payload["retries"] = retries + 1
-                    await r.lpush("policy-coverage-check-queue", json.dumps(payload))
+                    await r.lpush(
+                        Queues.POLICY_COVERAGE_CHECK_QUEUE.value, json.dumps(payload)
+                    )
                 else:
-                    await r.lpush("policy-coverage-check-dlq", json.dumps(payload))
+                    await r.lpush(
+                        Queues.POLICY_COVERAGE_CHECK_DLQ.value, json.dumps(payload)
+                    )
                     logger.error(f"Added {claim_id=} to policy coverage check DLQ.")
 
 
