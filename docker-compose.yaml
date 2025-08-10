@@ -20,7 +20,7 @@ services:
     env_file:
       - .env
     volumes:
-      - D:/Jobs/Assona/claims:/app/storage
+      - claims_storage:/app/storage
 
 
   email-processing-worker:
@@ -32,6 +32,8 @@ services:
       - redis
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
   document-classifier-worker:
     build:
@@ -42,6 +44,8 @@ services:
       - email-processing-worker
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
 
   ocr-worker:
@@ -53,6 +57,8 @@ services:
       - document-classifier-worker
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
 
   data-extraction-worker:
@@ -64,6 +70,8 @@ services:
       - ocr-worker
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
   policy-coverage-check-worker:
     build:
@@ -74,6 +82,8 @@ services:
       - data-extraction-worker
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
   cost-positions-extraction-worker:
     build:
@@ -84,6 +94,8 @@ services:
       - policy-coverage-check-worker
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
   case-plausibility-check-worker:
     build:
@@ -94,6 +106,8 @@ services:
       - cost-positions-extraction-worker
     env_file:
       - .env
+    volumes:
+      - claims_storage:/app/storage
 
   prometheus:
     image: 'prom/prometheus:v3.5.0'
@@ -122,3 +136,9 @@ services:
 
 volumes:
   grafana_data: {}
+  claims_storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CLAIMS_STORAGE_LOCAL_PATH}
