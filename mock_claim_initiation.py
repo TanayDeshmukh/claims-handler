@@ -1,5 +1,5 @@
 import os
-
+import argparse
 import requests
 from dotenv import load_dotenv
 
@@ -28,7 +28,23 @@ def send_mock_email():
 
 
 if __name__ == "__main__":
-    num_samples = 10
+    parser = argparse.ArgumentParser(
+        description="Run with a specified number of samples."
+    )
+
+    parser.add_argument(
+        "--num_samples",
+        type=int,
+        default=10,
+        help="Number of dummy claim samples to be generated.",
+    )
+
+    args = parser.parse_args()
+
+    num_samples = args.num_samples
+
+    assert num_samples < 100
+
     for i in range(num_samples):
         print(f"Mocking email {i+1}/{num_samples}...")
         send_mock_email()
