@@ -12,11 +12,9 @@ dependencies = [
     "prometheus-client==0.22.1",
     "PyMuPDF==1.26.3",
     "black==25.1.0",
-    "easyocr==1.7.2"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black==25.1.0",
     "pytest==8.4.1",
 ]
