@@ -23,16 +23,12 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 async def run_case_plausibility_check(claim_id: str) -> bool:
     # This function mocks the plausibility check of the cost positions
-    # eg. Random Forest/ XGBoost, Transformer based models
 
     case_document_dir = get_local_storage().file_path(claim_id)
     case_df_path = case_document_dir / f"{claim_id.lower()}.parquet"
 
-    # read the cost positions from the database
-    # Generate cost position embeddings (Pretrained models in short term, custom trained models in the long run)
-    # Concatenate with embeddings with case features
-    # Tree based algorithm (Random forest / XGBoost) to predict the plausibility
-    # Result can be decided by applying a threshold to the output
+    # code to check plausibility
+
     time.sleep(random.randint(1, 5))
 
     result = random.choices([True, False], [0.8, 0.2], k=1)

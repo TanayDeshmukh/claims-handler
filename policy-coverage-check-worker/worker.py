@@ -31,13 +31,6 @@ async def run_policy_coverage_check(claim_id: str) -> int:
     claim_document_dir = get_local_storage().file_path(claim_id)
     case_df_path = claim_document_dir / f"{claim_id.lower()}.parquet"
 
-    # 1. Load dataframe
-    # 2. Use lookup table for hard checks like policy number and damage date. (Must have a 100% match)
-    # 3. Use fuzzy check for names, shop details, bicycle details. (Typos are common when writing names, hence a fuzzy check)
-    # 4. Use transformer based reranker model to check similarity of damage description to the policy description. (damage description should match the policy description)
-    # 5. Calculate a confidence using the three methods
-    # 6. Return a boolean flag by thresholding the confidence
-
     time.sleep(random.randint(1, 5))
 
     result = random.choices([True, False], [0.8, 0.2], k=1)

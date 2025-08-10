@@ -27,7 +27,7 @@ async def perform_ocr(claim_id: str):
     # Models like Tesseract, EasyOCR can be used
 
     claim_document_dir = get_local_storage().file_path(claim_id)
-    document_path = case_document_dir / f"{claim_id.lower()}.pdf"
+    document_path = claim_document_dir / f"{claim_id.lower()}.pdf"
 
     document = pymupdf.open(document_path)
     doc_text = "\n".join([page.get_text() for page in document])

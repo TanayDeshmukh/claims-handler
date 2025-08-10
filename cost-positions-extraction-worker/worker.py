@@ -24,7 +24,6 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 async def run_cost_position_extraction(claim_id: str):
     # This function mocks the cost position extraction step
-    # TODO describe in detail the possible options for cost position extraction
     # eg. Donut, LLMs, Table Transformer, Amazon Tesseract, Azure Document Intelligence,
     # Docling, pdfplumber (work well for machine generated pdf)
 
