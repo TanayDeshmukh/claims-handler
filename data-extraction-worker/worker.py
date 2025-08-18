@@ -2,8 +2,6 @@ import asyncio
 import json
 import os
 import random
-import time
-from typing import Literal
 
 import redis.asyncio as redis
 from dotenv import load_dotenv
@@ -35,7 +33,7 @@ async def run_data_extraction(claim_id: str):
     # LLM call to extract structured information from the dummy ocr text
     # Output can be saved in a parquet file in the claim storage dir
 
-    time.sleep(random.randint(1, 4))
+    await asyncio.sleep(random.randint(1, 5))
 
 
 async def worker():

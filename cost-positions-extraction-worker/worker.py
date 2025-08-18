@@ -2,8 +2,6 @@ import asyncio
 import json
 import os
 import random
-import time
-from typing import Literal
 
 import redis.asyncio as redis
 from dotenv import load_dotenv
@@ -37,7 +35,7 @@ async def run_cost_position_extraction(claim_id: str):
     # Use the PDF and OCR to extract cost positions using one of the mentioned methods
     # The cost positions will ideally be saved in a database
 
-    time.sleep(random.randint(1, 5))
+    await asyncio.sleep(random.randint(1, 5))
 
 
 async def worker():

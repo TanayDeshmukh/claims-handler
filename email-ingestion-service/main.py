@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import random
@@ -59,7 +60,7 @@ async def ingest_email(
         local_storage: LocalStorage = get_local_storage()
         pdf_contents = await attachment.read()
 
-        time.sleep(random.randint(1, 5))
+        await asyncio.sleep(random.randint(1, 5))
 
         claim_id = await local_storage.store(file_bytes=pdf_contents, extension="pdf")
 

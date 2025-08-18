@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import random
-import time
 from typing import Literal
 
 import redis.asyncio as redis
@@ -33,7 +32,8 @@ async def classify_document(claim_id: str) -> Literal["partial", "total_loss", "
 
     # LLM call to classify the document type
 
-    time.sleep(random.randint(1, 4))
+    await asyncio.sleep(random.randint(1, 5))
+
     document_type = random.choices(
         ["partial", "total_loss", "other"], [0.8, 0.1, 0.1], k=1
     )

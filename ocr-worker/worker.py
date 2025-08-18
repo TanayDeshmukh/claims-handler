@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import random
-import time
 
 import pymupdf
 import redis.asyncio as redis
@@ -36,7 +35,7 @@ async def perform_ocr(claim_id: str):
     with open(dummy_ocr_file, "w") as f:
         f.writelines(doc_text)
 
-    time.sleep(random.randint(1, 4))
+    await asyncio.sleep(random.randint(1, 5))
 
 
 async def worker():

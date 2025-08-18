@@ -2,8 +2,6 @@ import asyncio
 import json
 import os
 import random
-import time
-from typing import Literal
 
 import redis.asyncio as redis
 from dotenv import load_dotenv
@@ -31,7 +29,7 @@ async def run_policy_coverage_check(claim_id: str) -> int:
     claim_document_dir = get_local_storage().file_path(claim_id)
     case_df_path = claim_document_dir / f"{claim_id.lower()}.parquet"
 
-    time.sleep(random.randint(1, 5))
+    await asyncio.sleep(random.randint(1, 5))
 
     result = random.choices([True, False], [0.8, 0.2], k=1)
 
