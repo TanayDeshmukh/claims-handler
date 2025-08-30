@@ -20,7 +20,7 @@ logger = get_logger()
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 
 
-async def run_policy_coverage_check(claim_id: str) -> int:
+async def run_policy_coverage_check(claim_id: str) -> bool:
     # This function mocks the policy coverage check step
     # Lookup table
     # Fuzzy check
